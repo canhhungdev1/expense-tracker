@@ -65,7 +65,7 @@ export class TransactionService {
         }
       });
 
-      const params = { ...cleanFilters, page, limit: 20 };
+      const params = { ...cleanFilters, page, limit: 10 };
       console.log('--- ĐANG GỌI API LỊCH SỬ ---', params);
       
       const res = await firstValueFrom(
