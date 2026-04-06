@@ -35,7 +35,7 @@ Chart.register(...registerables);
               (change)="onMonthChange($event)"
               class="w-full bg-white dark:bg-slate-900 rounded-2xl px-4 py-3 text-xs font-bold text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
             >
-              <option *ngFor="let m of months" [value]="m">Tháng {{ m }}</option>
+              <option *ngFor="let m of months" [value]="m" [selected]="transactionService.selectedMonth() === m">Tháng {{ m }}</option>
             </select>
             <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
@@ -47,7 +47,7 @@ Chart.register(...registerables);
               (change)="onYearChange($event)"
               class="w-full bg-white dark:bg-slate-900 rounded-2xl px-4 py-3 text-xs font-bold text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
             >
-              <option *ngFor="let y of years" [value]="y">Năm {{ y }}</option>
+              <option *ngFor="let y of years" [value]="y" [selected]="transactionService.selectedYear() === y">Năm {{ y }}</option>
             </select>
             <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
@@ -157,7 +157,7 @@ export class StatisticsComponent implements AfterViewInit, OnDestroy {
 
   distributionType = signal<'income' | 'expense'>('expense');
   months = Array.from({ length: 12 }, (_, i) => i + 1);
-  years = [2024, 2025, 2026];
+  years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
 
   @ViewChild('doughnutCanvas') doughnutCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('barCanvas') barCanvas!: ElementRef<HTMLCanvasElement>;
