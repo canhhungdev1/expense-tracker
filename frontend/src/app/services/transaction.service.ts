@@ -24,6 +24,10 @@ export class TransactionService {
   private transactionsSignal = signal<Transaction[]>([]);
   readonly transactions = this.transactionsSignal.asReadonly();
 
+  // Bộ lọc cho thống kê
+  selectedMonth = signal<number>(new Date().getMonth() + 1);
+  selectedYear = signal<number>(new Date().getFullYear());
+
   constructor() {
     this.loadTransactions();
     this.categoryService.loadCategories();
@@ -98,9 +102,33 @@ export class TransactionService {
     return Math.round(((curr - last) / last) * 100);
   });
 
-  // Biểu đồ: Phân bổ chi tiêu
+  // Dữ liệu lọc theo kỳ (Tháng/Năm chọn trên trang Phân tích)
+  readonly filteredTransactions = computed(() => {
+    const month = this.selectedMonth().toString().padStart(2, '0');
+    const year = this.selectedYear();
+    const prefix = `${year}-${month}`;
+    return this.transactionsSignal().filter(t => t.date.startsWith(prefix));
+  });
+
+  readonly periodIncome = computed(() => 
+    this.filteredTransactions().filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  );
+
+  readonly periodExpense = computed(() => 
+    this.filteredTransactions().filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+  );
+
+  readonly savingsRate = computed(() => {
+    const inc = this.periodIncome();
+    const exp = this.periodExpense();
+    if (inc <= 0) return 0;
+    const rate = ((inc - exp) / inc) * 100;
+    return Math.max(0, Math.round(rate)); // Đảm bảo không âm (nếu chi > thu)
+  });
+
+  // Biểu đồ: Phân bổ chi tiêu (theo kỳ lọc)
   readonly expensesByCategory = computed(() => {
-    const expenses = this.transactions().filter(t => t.type === 'expense');
+    const expenses = this.filteredTransactions().filter(t => t.type === 'expense');
     const categories: Record<number, number> = {};
     
     expenses.forEach(t => {
@@ -116,6 +144,30 @@ export class TransactionService {
           name: cat?.name || 'Khác',
           icon: cat?.icon || '✨',
           color: cat?.color || '#94A3B8',
+          amount
+        };
+      })
+      .sort((a, b) => b.amount - a.amount);
+  });
+
+  // Biểu đồ: Phân bổ thu nhập (theo kỳ lọc)
+  readonly incomeByCategory = computed(() => {
+    const income = this.filteredTransactions().filter(t => t.type === 'income');
+    const categories: Record<number, number> = {};
+    
+    income.forEach(t => {
+      categories[t.categoryId] = (categories[t.categoryId] || 0) + Number(t.amount);
+    });
+
+    return Object.entries(categories)
+      .map(([id, amount]) => {
+        const catId = Number(id);
+        const cat = this.categoryService.categories().find(c => c.id === catId);
+        return {
+          id: catId,
+          name: cat?.name || 'Khác',
+          icon: cat?.icon || '✨',
+          color: cat?.color || '#10b981',
           amount
         };
       })
