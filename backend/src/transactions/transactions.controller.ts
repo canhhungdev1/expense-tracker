@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Delete, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Delete, Param, UseGuards, Request, Query } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { Transaction } from './transaction.entity';
 import { AuthGuard } from '@nestjs/passport';
@@ -9,8 +9,26 @@ export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @Get()
-  findAll(@Request() req): Promise<Transaction[]> {
-    return this.transactionsService.findAll(req.user.userId);
+  findAll(
+    @Request() req,
+    @Query() query: {
+      page?: string;
+      limit?: string;
+      type?: 'income' | 'expense';
+      categoryId?: string;
+      startDate?: string;
+      endDate?: string;
+      search?: string;
+    }
+  ): Promise<{ data: Transaction[]; total: number; hasMore: boolean }> {
+    // Chuyển đổi các tham số cần thiết sang số lẻ (numeric)
+    const processedQuery = {
+      ...query,
+      page: query.page ? Number(query.page) : undefined,
+      limit: query.limit ? Number(query.limit) : undefined,
+      categoryId: query.categoryId ? Number(query.categoryId) : undefined,
+    };
+    return this.transactionsService.findAll(req.user.userId, processedQuery);
   }
 
   @Post()

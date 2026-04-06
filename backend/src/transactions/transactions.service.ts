@@ -10,12 +10,57 @@ export class TransactionsService {
     private transactionsRepository: Repository<Transaction>,
   ) {}
 
-  findAll(userId: number): Promise<Transaction[]> {
-    return this.transactionsRepository.find({
-      where: { userId },
-      relations: ['category'],
-      order: { date: 'DESC', id: 'DESC' },
-    });
+  async findAll(
+    userId: number,
+    query: {
+      page?: number;
+      limit?: number;
+      type?: 'income' | 'expense';
+      categoryId?: number;
+      startDate?: string;
+      endDate?: string;
+      search?: string;
+    }
+  ): Promise<{ data: Transaction[]; total: number; hasMore: boolean }> {
+    const { page = 1, limit = 20, type, categoryId, startDate, endDate, search } = query;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.transactionsRepository.createQueryBuilder('transaction')
+      .leftJoinAndSelect('transaction.category', 'category')
+      .where('transaction.userId = :userId', { userId })
+      .orderBy('transaction.date', 'DESC')
+      .addOrderBy('transaction.id', 'DESC');
+
+    if (type) {
+      queryBuilder.andWhere('transaction.type = :type', { type });
+    }
+
+    if (categoryId) {
+      queryBuilder.andWhere('transaction.categoryId = :categoryId', { categoryId });
+    }
+
+    if (startDate) {
+      queryBuilder.andWhere('transaction.date >= :startDate', { startDate });
+    }
+
+    if (endDate) {
+      queryBuilder.andWhere('transaction.date <= :endDate', { endDate });
+    }
+
+    if (search) {
+      queryBuilder.andWhere('transaction.note LIKE :search', { search: `%${search}%` });
+    }
+
+    const [data, total] = await queryBuilder
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data,
+      total,
+      hasMore: total > skip + data.length,
+    };
   }
 
   async create(transactionData: Partial<Transaction>, userId: number): Promise<Transaction> {

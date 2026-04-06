@@ -24,6 +24,14 @@ export class TransactionService {
   private transactionsSignal = signal<Transaction[]>([]);
   readonly transactions = this.transactionsSignal.asReadonly();
 
+  // Dữ liệu cho trang Lịch sử (Phân trang)
+  private historyTransactionsSignal = signal<Transaction[]>([]);
+  readonly historyTransactions = this.historyTransactionsSignal.asReadonly();
+  
+  historyTotal = signal<number>(0);
+  hasMoreHistory = signal<boolean>(false);
+  historyPage = signal<number>(1);
+
   // Bộ lọc cho thống kê
   selectedMonth = signal<number>(new Date().getMonth() + 1);
   selectedYear = signal<number>(new Date().getFullYear());
@@ -35,12 +43,37 @@ export class TransactionService {
 
   async loadTransactions() {
     try {
-      const data = await firstValueFrom(this.http.get<Transaction[]>(this.apiUrl));
-      // Trình điều khiển MariaDB trả về amount dưới dạng string cho decimal, cần ép kiểu lại
-      const formattedData = data.map(t => ({ ...t, amount: Number(t.amount) }));
+      // Tải 1000 cái gần nhất cho Dashboard/Stats (giả định đủ)
+      const res = await firstValueFrom(this.http.get<{data: Transaction[], total: number}>(`${this.apiUrl}?limit=1000`));
+      const formattedData = res.data.map(t => ({ ...t, amount: Number(t.amount) }));
       this.transactionsSignal.set(formattedData);
     } catch (error) {
       console.error('Lỗi khi tải giao dịch:', error);
+    }
+  }
+
+  async loadHistory(filters: any = {}, append: boolean = false) {
+    try {
+      const page = append ? this.historyPage() + 1 : 1;
+      const params = { ...filters, page, limit: 20 };
+      
+      const res = await firstValueFrom(
+        this.http.get<{data: Transaction[], total: number, hasMore: boolean}>(this.apiUrl, { params })
+      );
+      
+      const formattedData = res.data.map(t => ({ ...t, amount: Number(t.amount) }));
+      
+      if (append) {
+        this.historyTransactionsSignal.update(prev => [...prev, ...formattedData]);
+      } else {
+        this.historyTransactionsSignal.set(formattedData);
+      }
+      
+      this.historyTotal.set(res.total);
+      this.hasMoreHistory.set(res.hasMore);
+      this.historyPage.set(page);
+    } catch (error) {
+      console.error('Lỗi khi tải lịch sử:', error);
     }
   }
 

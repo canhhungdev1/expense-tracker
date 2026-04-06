@@ -96,7 +96,15 @@ import { CategoryService } from '../services/category.service';
       </div>
 
       <!-- Transaction Groups -->
-      <div class="space-y-10">
+      <div class="space-y-10 relative">
+        <!-- Loading Overlay -->
+        <div *ngIf="isLoading()" class="absolute inset-x-0 -top-4 flex justify-center z-10">
+          <div class="bg-white dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800 px-4 py-2 rounded-full flex items-center gap-2 animate-bounce">
+            <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+            <span class="text-[9px] font-black uppercase tracking-widest text-slate-500">Đang tải...</span>
+          </div>
+        </div>
+
         <div *ngFor="let group of groupedTransactions()">
           <div class="flex items-center justify-between mb-4 px-2">
             <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]">{{ group.dateLabel }}</h2>
@@ -139,8 +147,15 @@ import { CategoryService } from '../services/category.service';
           </div>
         </div>
 
+        <!-- Load More Button -->
+        <div *ngIf="transactionService.hasMoreHistory() && !isLoading()" class="pt-4 pb-8 flex justify-center">
+           <button (click)="onLoadMore()" class="group relative px-8 py-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all">
+             <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-emerald-500 transition-colors">Xem thêm giao dịch</span>
+           </button>
+        </div>
+
         <!-- Empty State -->
-        <div *ngIf="groupedTransactions().length === 0" class="pt-20 text-center">
+        <div *ngIf="groupedTransactions().length === 0 && !isLoading()" class="pt-20 text-center">
           <div class="w-24 h-24 bg-slate-100 dark:bg-slate-900 rounded-[40px] flex items-center justify-center mx-auto mb-6 text-4xl grayscale opacity-50">
             🔎
           </div>
@@ -224,7 +239,7 @@ import { CategoryService } from '../services/category.service';
   `]
 })
 export class TransactionHistoryComponent {
-  private transactionService = inject(TransactionService);
+  transactionService = inject(TransactionService);
   categoryService = inject(CategoryService);
 
   searchQuery = signal('');
@@ -237,18 +252,57 @@ export class TransactionHistoryComponent {
   minAmount = signal<number | undefined>(undefined);
   maxAmount = signal<number | undefined>(undefined);
 
+  isLoading = signal(false);
   editingTransaction = signal<Transaction | null>(null);
   isEditModalOpen = signal(false);
+
+  constructor() {
+    // Tự động tải lại lịch sử khi có bất kỳ bộ lọc nào thay đổi
+    import('@angular/core').then(m => {
+      m.effect(() => {
+        const filters = {
+          search: this.searchQuery(),
+          type: this.filterType() !== 'all' ? this.filterType() : undefined,
+          categoryId: this.selectedCategory() !== 'all' ? Number(this.selectedCategory()) : undefined,
+          startDate: this.startDate(),
+          endDate: this.endDate()
+        };
+        
+        this.isLoading.set(true);
+        this.transactionService.loadHistory(filters).then(() => {
+          this.isLoading.set(false);
+        });
+      }, { allowSignalWrites: true });
+    });
+  }
 
   filteredCategories = computed(() => {
     const type = this.editingTransaction()?.type || 'expense';
     return this.categoryService.categories().filter(c => c.type === type);
   });
 
+  async onLoadMore() {
+    if (this.isLoading()) return;
+    
+    const filters = {
+      search: this.searchQuery(),
+      type: this.filterType() !== 'all' ? this.filterType() : undefined,
+      categoryId: this.selectedCategory() !== 'all' ? Number(this.selectedCategory()) : undefined,
+      startDate: this.startDate(),
+      endDate: this.endDate()
+    };
+
+    this.isLoading.set(true);
+    await this.transactionService.loadHistory(filters, true);
+    this.isLoading.set(false);
+  }
+
   async onDelete(id: number) {
     if (confirm('Bạn có chắc chắn muốn xóa giao dịch này không?')) {
       try {
         await this.transactionService.deleteTransaction(id);
+        // Tải lại lịch sử sau khi xóa
+        this.onLoadMore(); // Hoặc reset về trang 1
       } catch (error) {
         alert('Lỗi khi xóa giao dịch. Vui lòng thử lại!');
       }
@@ -256,7 +310,6 @@ export class TransactionHistoryComponent {
   }
 
   onEdit(transaction: Transaction) {
-    // Clone giao dịch để tránh sửa trực tiếp vào mảng gốc khi chưa lưu
     this.editingTransaction.set({ ...transaction });
     this.isEditModalOpen.set(true);
   }
@@ -274,6 +327,7 @@ export class TransactionHistoryComponent {
         });
         this.isEditModalOpen.set(false);
         this.editingTransaction.set(null);
+        // Tải lại lịch sử sau khi sửa
       } catch (error) {
         alert('Lỗi khi cập nhật giao dịch. Vui lòng kiểm tra lại!');
       }
@@ -291,28 +345,9 @@ export class TransactionHistoryComponent {
   }
 
   groupedTransactions = computed(() => {
-    let list = this.transactionService.transactions();
+    // Dữ liệu ở đây đã được Backend lọc sẵn
+    const list = this.transactionService.historyTransactions();
     
-    const query = this.searchQuery().trim().toLowerCase();
-    if (query) {
-      list = list.filter(t => t.note.toLowerCase().includes(query) || (t.category?.name || 'Khác').toLowerCase().includes(query));
-    }
-
-    if (this.filterType() !== 'all') {
-      list = list.filter(t => t.type === this.filterType());
-    }
-
-    if (this.selectedCategory() !== 'all') {
-      list = list.filter(t => t.categoryId.toString() === this.selectedCategory());
-    }
-
-    if (this.startDate()) {
-      list = list.filter(t => t.date >= this.startDate());
-    }
-    if (this.endDate()) {
-      list = list.filter(t => t.date <= this.endDate());
-    }
-
     const groups: Record<string, Transaction[]> = {};
     list.forEach(t => {
       if (!groups[t.date]) groups[t.date] = [];
