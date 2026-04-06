@@ -1,0 +1,221 @@
+import { Component, inject, computed, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { TransactionService, Transaction } from '../services/transaction.service';
+import { CategoryService } from '../services/category.service';
+
+@Component({
+  selector: 'app-transaction-history',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
+    <div class="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 pb-24 transition-colors duration-500">
+      <!-- Header with Search & Filter -->
+      <div class="mb-8 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none">Lịch sử</h1>
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2">Theo dõi chi tiêu của bạn</p>
+          </div>
+          <div class="flex gap-2">
+            <button (click)="showFilters.set(!showFilters())" [class]="showFilters() ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-white dark:bg-slate-900 text-slate-400'" class="w-11 h-11 rounded-2xl shadow-sm flex items-center justify-center transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <!-- Search Bar -->
+          <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 dark:text-slate-500 transition-colors group-focus-within:text-emerald-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              [ngModel]="searchQuery()"
+              (ngModelChange)="searchQuery.set($event)"
+              placeholder="Tìm kiếm giao dịch..."
+              class="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-slate-900 border-transparent rounded-[22px] focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-sm text-slate-700 dark:text-slate-200 transition-all placeholder:text-slate-400"
+            >
+          </div>
+
+          <!-- Advanced Filter Panel -->
+          <div *ngIf="showFilters()" class="bg-white dark:bg-slate-900 rounded-[32px] p-6 space-y-6 border border-slate-100 dark:border-slate-800 shadow-xl">
+            <div class="flex items-center justify-between">
+              <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bộ lọc nâng cao</h3>
+              <button (click)="clearFilters()" class="text-[9px] font-black text-rose-500 uppercase tracking-widest">Xóa hết</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="col-span-2">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Loại giao dịch</label>
+                <div class="flex p-1 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                  <button (click)="filterType.set('all')" [class]="filterType() === 'all' ? 'bg-white dark:bg-slate-900 shadow-sm text-emerald-600' : 'text-slate-400'" class="flex-1 py-2 text-[9px] font-black uppercase rounded-xl transition-all">Tất cả</button>
+                  <button (click)="filterType.set('income')" [class]="filterType() === 'income' ? 'bg-white dark:bg-slate-900 shadow-sm text-emerald-600' : 'text-slate-400'" class="flex-1 py-2 text-[9px] font-black uppercase rounded-xl transition-all">Thu nhập</button>
+                  <button (click)="filterType.set('expense')" [class]="filterType() === 'expense' ? 'bg-white dark:bg-slate-900 shadow-sm text-rose-600' : 'text-slate-400'" class="flex-1 py-2 text-[9px] font-black uppercase rounded-xl transition-all">Chi tiêu</button>
+                </div>
+              </div>
+              <div>
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Từ ngày</label>
+                <input type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)" class="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl text-[11px] font-bold text-slate-700 dark:text-slate-200 outline-none">
+              </div>
+              <div>
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Đến ngày</label>
+                <input type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)" class="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl text-[11px] font-bold text-slate-700 dark:text-slate-200 outline-none">
+              </div>
+              <div class="col-span-2 pt-2">
+                <button (click)="showFilters.set(false)" class="w-full py-4 bg-emerald-500 text-white rounded-[24px] text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-500/25">
+                  Áp dụng bộ lọc
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Horizontal Scroll -->
+        <div class="flex gap-3 overflow-x-auto no-scrollbar py-2 -mx-2 px-2">
+          <button 
+            (click)="selectedCategory.set('all')"
+            [class]="selectedCategory() === 'all' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 scale-105' : 'bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 border border-slate-100 dark:border-slate-800'"
+            class="px-6 py-2.5 rounded-[20px] text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all duration-300"
+          >Tất cả</button>
+          <button 
+            *ngFor="let cat of categoryService.categories()"
+            (click)="selectedCategory.set(cat.id.toString())"
+            [class]="selectedCategory() === cat.id.toString() ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 scale-105' : 'bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 border border-slate-100 dark:border-slate-800'"
+            class="px-6 py-2.5 rounded-[20px] text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all duration-300 flex items-center gap-2"
+          >
+            <span>{{ cat.icon }}</span>
+            <span>{{ cat.name }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Transaction Groups -->
+      <div class="space-y-10">
+        <div *ngFor="let group of groupedTransactions()">
+          <div class="flex items-center justify-between mb-4 px-2">
+            <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]">{{ group.dateLabel }}</h2>
+            <span class="text-[10px] font-black text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">{{ group.total | number:'1.0-0' }}₫</span>
+          </div>
+
+          <div class="space-y-3">
+            <div *ngFor="let t of group.transactions" class="bg-white dark:bg-slate-900 p-5 rounded-[28px] shadow-sm border border-slate-100 dark:border-slate-800 group hover:scale-[1.02] transition-all duration-300">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-[20px] bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-2xl shadow-inner group-hover:bg-emerald-50 dark:group-hover:bg-emerald-500/10 transition-colors">
+                  {{ t.category?.icon || '✨' }}
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center justify-between">
+                    <h3 class="font-black text-slate-900 dark:text-white text-sm tracking-tight capitalize">{{ t.note || t.category?.name || 'Giao dịch' }}</h3>
+                    <span [class]="t.type === 'income' ? 'text-emerald-500' : 'text-rose-500'" class="font-black text-base tracking-tight">
+                      {{ t.type === 'income' ? '+' : '-' }}{{ t.amount | number:'1.0-0' }}₫
+                    </span>
+                  </div>
+                  <div class="flex items-center justify-between mt-1">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ t.category?.name || 'Khác' }}</span>
+                    <span class="text-[9px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest">Giao dịch #{{ t.id }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="groupedTransactions().length === 0" class="pt-20 text-center">
+          <div class="w-24 h-24 bg-slate-100 dark:bg-slate-900 rounded-[40px] flex items-center justify-center mx-auto mb-6 text-4xl grayscale opacity-50">
+            🔎
+          </div>
+          <h3 class="text-lg font-black text-slate-900 dark:text-white tracking-tight">Không tìm thấy giao dịch</h3>
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [`
+    :host { display: block; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  `]
+})
+export class TransactionHistoryComponent {
+  private transactionService = inject(TransactionService);
+  categoryService = inject(CategoryService);
+
+  searchQuery = signal('');
+  selectedCategory = signal<string>('all');
+  
+  showFilters = signal(false);
+  filterType = signal<'all' | 'income' | 'expense'>('all');
+  startDate = signal('');
+  endDate = signal('');
+  minAmount = signal<number | undefined>(undefined);
+  maxAmount = signal<number | undefined>(undefined);
+
+  clearFilters() {
+    this.filterType.set('all');
+    this.selectedCategory.set('all');
+    this.startDate.set('');
+    this.endDate.set('');
+    this.minAmount.set(undefined);
+    this.maxAmount.set(undefined);
+    this.searchQuery.set('');
+  }
+
+  groupedTransactions = computed(() => {
+    let list = this.transactionService.transactions();
+    
+    const query = this.searchQuery().trim().toLowerCase();
+    if (query) {
+      list = list.filter(t => t.note.toLowerCase().includes(query) || (t.category?.name || 'Khác').toLowerCase().includes(query));
+    }
+
+    if (this.filterType() !== 'all') {
+      list = list.filter(t => t.type === this.filterType());
+    }
+
+    if (this.selectedCategory() !== 'all') {
+      list = list.filter(t => t.categoryId.toString() === this.selectedCategory());
+    }
+
+    if (this.startDate()) {
+      list = list.filter(t => t.date >= this.startDate());
+    }
+    if (this.endDate()) {
+      list = list.filter(t => t.date <= this.endDate());
+    }
+
+    const groups: Record<string, Transaction[]> = {};
+    list.forEach(t => {
+      if (!groups[t.date]) groups[t.date] = [];
+      groups[t.date].push(t);
+    });
+
+    return Object.entries(groups)
+      .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
+      .map(([date, items]) => ({
+        date,
+        dateLabel: this.formatDateLabel(date),
+        transactions: items,
+        total: items.reduce((sum, item) => sum + (item.type === 'income' ? Number(item.amount) : -Number(item.amount)), 0)
+      }));
+  });
+
+  private formatDateLabel(dateStr: string): string {
+    const d = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    if (d.toDateString() === today.toDateString()) return 'Hôm nay';
+    if (d.toDateString() === yesterday.toDateString()) return 'Hôm qua';
+    
+    const days = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+    return `${days[d.getDay()]}, ${d.toLocaleDateString('vi-VN')}`;
+  }
+}
