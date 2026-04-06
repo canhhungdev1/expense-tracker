@@ -19,7 +19,7 @@ export interface Transaction {
 export class TransactionService {
   private http = inject(HttpClient);
   private categoryService = inject(CategoryService);
-  private apiUrl = 'http://192.168.1.15:3000/api/transactions';
+  private apiUrl = 'http://localhost:3000/api/transactions';
 
   private transactionsSignal = signal<Transaction[]>([]);
   readonly transactions = this.transactionsSignal.asReadonly();
@@ -43,7 +43,7 @@ export class TransactionService {
 
   async loadTransactions() {
     try {
-      // Tải 1000 cái gần nhất cho Dashboard/Stats (giả định đủ)
+      // Tải 1000 cái gần nhất cho Dashboard/Stats
       const res = await firstValueFrom(this.http.get<{data: Transaction[], total: number}>(`${this.apiUrl}?limit=1000`));
       const formattedData = res.data.map(t => ({ ...t, amount: Number(t.amount) }));
       this.transactionsSignal.set(formattedData);
@@ -55,12 +55,24 @@ export class TransactionService {
   async loadHistory(filters: any = {}, append: boolean = false) {
     try {
       const page = append ? this.historyPage() + 1 : 1;
-      const params = { ...filters, page, limit: 20 };
+      
+      // Chỉ giữ lại các tham số có giá trị
+      const cleanFilters: any = {};
+      Object.keys(filters).forEach(key => {
+        const val = filters[key];
+        if (val !== undefined && val !== null && val !== '' && val !== 'all') {
+          cleanFilters[key] = val;
+        }
+      });
+
+      const params = { ...cleanFilters, page, limit: 20 };
+      console.log('--- ĐANG GỌI API LỊCH SỬ ---', params);
       
       const res = await firstValueFrom(
         this.http.get<{data: Transaction[], total: number, hasMore: boolean}>(this.apiUrl, { params })
       );
       
+      console.log('--- KẾT QUẢ API LỊCH SỬ ---', res);
       const formattedData = res.data.map(t => ({ ...t, amount: Number(t.amount) }));
       
       if (append) {

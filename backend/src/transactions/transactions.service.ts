@@ -23,7 +23,7 @@ export class TransactionsService {
     }
   ): Promise<{ data: Transaction[]; total: number; hasMore: boolean }> {
     const { page = 1, limit = 20, type, categoryId, startDate, endDate, search } = query;
-    const skip = (page - 1) * limit;
+    const offset = (page - 1) * limit;
 
     const queryBuilder = this.transactionsRepository.createQueryBuilder('transaction')
       .leftJoinAndSelect('transaction.category', 'category')
@@ -31,35 +31,35 @@ export class TransactionsService {
       .orderBy('transaction.date', 'DESC')
       .addOrderBy('transaction.id', 'DESC');
 
-    if (type) {
+    if (type && (type as any) !== 'all') {
       queryBuilder.andWhere('transaction.type = :type', { type });
     }
 
-    if (categoryId) {
+    if (categoryId && !isNaN(categoryId)) {
       queryBuilder.andWhere('transaction.categoryId = :categoryId', { categoryId });
     }
 
-    if (startDate) {
+    if (startDate && startDate.trim() !== '') {
       queryBuilder.andWhere('transaction.date >= :startDate', { startDate });
     }
 
-    if (endDate) {
+    if (endDate && endDate.trim() !== '') {
       queryBuilder.andWhere('transaction.date <= :endDate', { endDate });
     }
 
-    if (search) {
+    if (search && search.trim() !== '') {
       queryBuilder.andWhere('transaction.note LIKE :search', { search: `%${search}%` });
     }
 
     const [data, total] = await queryBuilder
-      .skip(skip)
-      .take(limit)
+      .offset(offset)
+      .limit(limit)
       .getManyAndCount();
 
     return {
       data,
       total,
-      hasMore: total > skip + data.length,
+      hasMore: total > offset + data.length,
     };
   }
 

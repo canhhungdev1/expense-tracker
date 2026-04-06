@@ -16,7 +16,7 @@ export interface Category {
 })
 export class CategoryService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://192.168.1.15:3000/api/categories';
+  private apiUrl = 'http://localhost:3000/api/categories';
 
   categories = signal<Category[]>([]);
 

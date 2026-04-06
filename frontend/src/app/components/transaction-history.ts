@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal } from '@angular/core';
+import { Component, inject, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TransactionService, Transaction } from '../services/transaction.service';
@@ -258,22 +258,20 @@ export class TransactionHistoryComponent {
 
   constructor() {
     // Tự động tải lại lịch sử khi có bất kỳ bộ lọc nào thay đổi
-    import('@angular/core').then(m => {
-      m.effect(() => {
-        const filters = {
-          search: this.searchQuery(),
-          type: this.filterType() !== 'all' ? this.filterType() : undefined,
-          categoryId: this.selectedCategory() !== 'all' ? Number(this.selectedCategory()) : undefined,
-          startDate: this.startDate(),
-          endDate: this.endDate()
-        };
-        
-        this.isLoading.set(true);
-        this.transactionService.loadHistory(filters).then(() => {
-          this.isLoading.set(false);
-        });
-      }, { allowSignalWrites: true });
-    });
+    effect(() => {
+      const filters = {
+        search: this.searchQuery(),
+        type: this.filterType() !== 'all' ? this.filterType() : undefined,
+        categoryId: this.selectedCategory() !== 'all' ? Number(this.selectedCategory()) : undefined,
+        startDate: this.startDate(),
+        endDate: this.endDate()
+      };
+      
+      this.isLoading.set(true);
+      this.transactionService.loadHistory(filters).then(() => {
+        this.isLoading.set(false);
+      });
+    }, { allowSignalWrites: true });
   }
 
   filteredCategories = computed(() => {
