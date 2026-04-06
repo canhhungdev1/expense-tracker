@@ -51,7 +51,7 @@ import { TransactionService } from '../services/transaction.service';
                 <p class="text-white text-lg font-bold text-left">-{{ transactionService.currentMonthExpense() | number:'1.0-0' }}₫</p>
               </div>
               <div class="mt-2 flex items-center gap-1">
-                <span [class]="transactionService.expenseChange() <= 0 ? 'text-emerald-400' : 'text-rose-400'" class="text-[8px] font-black">
+                <span [class]="transactionService.expenseChange() >= 0 ? 'text-emerald-400' : 'text-rose-400'" class="text-[8px] font-black">
                   {{ transactionService.expenseChange() >= 0 ? '▲' : '▼' }} {{ Math.abs(transactionService.expenseChange()) }}%
                 </span>
                 <span class="text-[7px] text-slate-400 font-bold uppercase tracking-tight">vs tháng trước</span>
