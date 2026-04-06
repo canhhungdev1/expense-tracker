@@ -65,7 +65,7 @@ import { TransactionService } from '../services/transaction.service';
       <div class="mb-8">
         <div class="flex items-center justify-between mb-4 px-1">
           <h3 class="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">Top chi tiêu</h3>
-          <button class="text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-widest">Xem tất cả</button>
+          <button routerLink="/statistics" class="text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-widest">Xem tất cả</button>
         </div>
         <div class="bg-white dark:bg-slate-900 rounded-[32px] p-6 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-6">
           <div *ngFor="let cat of topCategories" class="space-y-2">
