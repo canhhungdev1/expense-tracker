@@ -13,7 +13,7 @@ import { TransactionService } from '../services/transaction.service';
       <div class="flex items-center justify-between mb-6 px-2 pt-2">
         <div>
           <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Chào bạn! 👋</h1>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Tổng quan tháng 4</p>
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Tổng quan tháng {{ currentMonth }}</p>
         </div>
         <div class="w-12 h-12 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-center text-xl">
           😊
@@ -33,13 +33,29 @@ import { TransactionService } from '../services/transaction.service';
           </h2>
 
           <div class="grid grid-cols-2 gap-4 w-full">
-            <div class="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-              <p class="text-emerald-400 text-[9px] font-bold uppercase tracking-widest mb-1 text-left">Thu nhập</p>
-              <p class="text-white text-lg font-bold text-left">+{{ transactionService.totalIncome() | number:'1.0-0' }}₫</p>
+            <div class="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex flex-col justify-between">
+              <div>
+                <p class="text-emerald-400 text-[9px] font-bold uppercase tracking-widest mb-1 text-left">Thu nhập</p>
+                <p class="text-white text-lg font-bold text-left">+{{ transactionService.currentMonthIncome() | number:'1.0-0' }}₫</p>
+              </div>
+              <div class="mt-2 flex items-center gap-1">
+                <span [class]="transactionService.incomeChange() >= 0 ? 'text-emerald-400' : 'text-rose-400'" class="text-[8px] font-black">
+                  {{ transactionService.incomeChange() >= 0 ? '▲' : '▼' }} {{ Math.abs(transactionService.incomeChange()) }}%
+                </span>
+                <span class="text-[7px] text-slate-400 font-bold uppercase tracking-tight">vs tháng trước</span>
+              </div>
             </div>
-            <div class="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-              <p class="text-rose-400 text-[9px] font-bold uppercase tracking-widest mb-1 text-left">Chi tiêu</p>
-              <p class="text-white text-lg font-bold text-left">-{{ transactionService.totalExpense() | number:'1.0-0' }}₫</p>
+            <div class="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex flex-col justify-between">
+              <div>
+                <p class="text-rose-400 text-[9px] font-bold uppercase tracking-widest mb-1 text-left">Chi tiêu</p>
+                <p class="text-white text-lg font-bold text-left">-{{ transactionService.currentMonthExpense() | number:'1.0-0' }}₫</p>
+              </div>
+              <div class="mt-2 flex items-center gap-1">
+                <span [class]="transactionService.expenseChange() <= 0 ? 'text-emerald-400' : 'text-rose-400'" class="text-[8px] font-black">
+                  {{ transactionService.expenseChange() >= 0 ? '▲' : '▼' }} {{ Math.abs(transactionService.expenseChange()) }}%
+                </span>
+                <span class="text-[7px] text-slate-400 font-bold uppercase tracking-tight">vs tháng trước</span>
+              </div>
             </div>
           </div>
         </div>
@@ -102,10 +118,14 @@ import { TransactionService } from '../services/transaction.service';
 })
 export class DashboardComponent {
   transactionService = inject(TransactionService);
+  Math = Math;
+  currentMonth = new Date().getMonth() + 1;
 
   get topCategories() {
-    const expenses = this.transactionService.transactions().filter(t => t.type === 'expense');
-    const total = this.transactionService.totalExpense() || 1;
+    const now = new Date();
+    const prefix = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+    const expenses = this.transactionService.transactions().filter(t => t.type === 'expense' && t.date.startsWith(prefix));
+    const total = this.transactionService.currentMonthExpense() || 1;
     
     // Group by category name/icon (since we have the full category object)
     const groups: Record<string, {name: string, icon: string, amount: number}> = {};

@@ -55,6 +55,49 @@ export class TransactionService {
 
   readonly balance = computed(() => this.totalIncome() - this.totalExpense());
 
+  // Thống kê tháng hiện tại
+  readonly currentMonthIncome = computed(() => {
+    const now = new Date();
+    const prefix = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+    return this.transactionsSignal().filter(t => t.type === 'income' && t.date.startsWith(prefix)).reduce((s, t) => s + t.amount, 0);
+  });
+
+  readonly currentMonthExpense = computed(() => {
+    const now = new Date();
+    const prefix = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+    return this.transactionsSignal().filter(t => t.type === 'expense' && t.date.startsWith(prefix)).reduce((s, t) => s + t.amount, 0);
+  });
+
+  // Thống kê tháng trước
+  readonly lastMonthIncome = computed(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    const prefix = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+    return this.transactionsSignal().filter(t => t.type === 'income' && t.date.startsWith(prefix)).reduce((s, t) => s + t.amount, 0);
+  });
+
+  readonly lastMonthExpense = computed(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    const prefix = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+    return this.transactionsSignal().filter(t => t.type === 'expense' && t.date.startsWith(prefix)).reduce((s, t) => s + t.amount, 0);
+  });
+
+  // So sánh tăng trưởng (%)
+  readonly incomeChange = computed(() => {
+    const curr = this.currentMonthIncome();
+    const last = this.lastMonthIncome();
+    if (last === 0) return curr > 0 ? 100 : 0;
+    return Math.round(((curr - last) / last) * 100);
+  });
+
+  readonly expenseChange = computed(() => {
+    const curr = this.currentMonthExpense();
+    const last = this.lastMonthExpense();
+    if (last === 0) return curr > 0 ? 100 : 0;
+    return Math.round(((curr - last) / last) * 100);
+  });
+
   // Biểu đồ: Phân bổ chi tiêu
   readonly expensesByCategory = computed(() => {
     const expenses = this.transactions().filter(t => t.type === 'expense');
@@ -127,6 +170,28 @@ export class TransactionService {
       return formatted;
     } catch (error) {
       console.error('Lỗi khi lưu giao dịch:', error);
+      throw error;
+    }
+  }
+
+  async updateTransaction(id: number, transaction: Partial<Transaction>): Promise<Transaction> {
+    try {
+      const updated = await firstValueFrom(this.http.patch<Transaction>(`${this.apiUrl}/${id}`, transaction));
+      const formatted = { ...updated, amount: Number(updated.amount) };
+      this.transactionsSignal.update(ts => ts.map(t => t.id === id ? formatted : t));
+      return formatted;
+    } catch (error) {
+      console.error('Lỗi khi cập nhật giao dịch:', error);
+      throw error;
+    }
+  }
+
+  async deleteTransaction(id: number): Promise<void> {
+    try {
+      await firstValueFrom(this.http.delete(`${this.apiUrl}/${id}`));
+      this.transactionsSignal.update(ts => ts.filter(t => t.id !== id));
+    } catch (error) {
+      console.error('Lỗi khi xóa giao dịch:', error);
       throw error;
     }
   }

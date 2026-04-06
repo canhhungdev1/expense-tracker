@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Delete, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Delete, Param, UseGuards, Request } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { Transaction } from './transaction.entity';
 import { AuthGuard } from '@nestjs/passport';
@@ -16,6 +16,11 @@ export class TransactionsController {
   @Post()
   create(@Request() req, @Body() transaction: Partial<Transaction>): Promise<Transaction> {
     return this.transactionsService.create(transaction, req.user.userId);
+  }
+
+  @Patch(':id')
+  update(@Request() req, @Param('id') id: string, @Body() updateData: Partial<Transaction>): Promise<Transaction> {
+    return this.transactionsService.update(+id, updateData, req.user.userId);
   }
 
   @Delete(':id')
