@@ -137,11 +137,22 @@ Chart.register(...registerables);
         </div>
       </div>
 
-      <!-- Trend Analysis (Already functional, kept but could be updated) -->
-      <div class="bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-8 transition-colors">
-        <h3 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-8 text-center">Xu hướng 6 tháng</h3>
-        <div class="h-[220px]">
-          <canvas #barCanvas></canvas>
+      <!-- Trend Analysis -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Thu chi -->
+        <div class="bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+          <h3 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-8 text-center">Thu chi 6 tháng</h3>
+          <div class="h-[220px]">
+            <canvas #barCanvas></canvas>
+          </div>
+        </div>
+
+        <!-- Số dư & Tồn -->
+        <div class="bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+          <h3 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-8 text-center">Số dư & Tích lũy (Tồn)</h3>
+          <div class="h-[220px]">
+            <canvas #balanceCanvas></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -161,14 +172,17 @@ export class StatisticsComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild('doughnutCanvas') doughnutCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('barCanvas') barCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('balanceCanvas') balanceCanvas!: ElementRef<HTMLCanvasElement>;
 
   private doughnutChart?: Chart;
   private barChart?: Chart;
+  private balanceChart?: Chart;
 
   constructor() {
     effect(() => {
       // Trigger update when data or settings change
       this.transactionService.filteredTransactions();
+      this.transactionService.monthlyTrend();
       this.distributionType();
       this.themeService.isDarkMode();
       setTimeout(() => this.updateCharts(), 0);
@@ -198,6 +212,7 @@ export class StatisticsComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy() {
     if (this.doughnutChart) this.doughnutChart.destroy();
     if (this.barChart) this.barChart.destroy();
+    if (this.balanceChart) this.balanceChart.destroy();
   }
 
   private initCharts() {
@@ -243,16 +258,55 @@ export class StatisticsComponent implements AfterViewInit, OnDestroy {
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
+            y: { display: false },
+            x: { 
+              grid: { display: false }, 
+              ticks: { color: textColor, font: { size: 9, weight: 'bold' } } 
+            }
+          }
+        }
+      });
+    }
+
+    const balanceCtx = this.balanceCanvas.nativeElement.getContext('2d');
+    if (balanceCtx) {
+      if (this.balanceChart) this.balanceChart.destroy();
+      this.balanceChart = new Chart(balanceCtx, {
+        type: 'bar',
+        data: this.getBalanceData(),
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { 
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: isDark ? '#1e293b' : '#ffffff',
+              titleColor: isDark ? '#f8fafc' : '#0f172a',
+              bodyColor: isDark ? '#94a3b8' : '#64748b',
+              borderColor: isDark ? '#334155' : '#e2e8f0',
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 12,
+              callbacks: {
+                label: (context) => {
+                  let label = context.dataset.label || '';
+                  if (label) label += ': ';
+                  if (context.parsed.y !== null) {
+                    label += new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(context.parsed.y);
+                  }
+                  return label;
+                }
+              }
+            }
+          },
+          scales: {
             y: { 
               display: false,
-              grid: { display: false }
+              suggestedMin: 0
             },
             x: { 
               grid: { display: false }, 
-              ticks: { 
-                color: textColor,
-                font: { size: 9, weight: 'bold' } 
-              } 
+              ticks: { color: textColor, font: { size: 9, weight: 'bold' } } 
             }
           }
         }
@@ -261,7 +315,18 @@ export class StatisticsComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateCharts() {
-    this.initCharts();
+    if (this.doughnutChart) {
+      this.doughnutChart.data = this.getDoughnutData();
+      this.doughnutChart.update();
+    }
+    if (this.barChart) {
+      this.barChart.data = this.getBarData();
+      this.barChart.update();
+    }
+    if (this.balanceChart) {
+      this.balanceChart.data = this.getBalanceData();
+      this.balanceChart.update();
+    }
   }
 
   private getDoughnutData() {
@@ -279,7 +344,7 @@ export class StatisticsComponent implements AfterViewInit, OnDestroy {
   }
 
   private getBarData() {
-    const trend = this.transactionService.monthlyTrend(); // 6 months trend remains useful for comparison
+    const trend = this.transactionService.monthlyTrend();
     return {
       labels: trend.map(d => d.label),
       datasets: [
@@ -288,14 +353,43 @@ export class StatisticsComponent implements AfterViewInit, OnDestroy {
           data: trend.map(d => d.income),
           backgroundColor: '#10b981',
           borderRadius: 8,
-          barThickness: 12,
+          barThickness: 10,
         },
         {
           label: 'Chi tiêu',
           data: trend.map(d => d.expense),
           backgroundColor: '#f43f5e',
           borderRadius: 8,
+          barThickness: 10,
+        }
+      ]
+    };
+  }
+
+  private getBalanceData() {
+    const trend = this.transactionService.monthlyTrend();
+    return {
+      labels: trend.map(d => d.label),
+      datasets: [
+        {
+          label: 'Số dư (Tồn)',
+          type: 'bar' as const,
+          data: trend.map(d => d.balance),
+          backgroundColor: trend.map(d => d.balance >= 0 ? '#10b981' : '#f43f5e'),
+          borderRadius: 6,
           barThickness: 12,
+          order: 2
+        },
+        {
+          label: 'Tích lũy',
+          type: 'line' as const,
+          data: trend.map(d => d.cumulative),
+          borderColor: '#3b82f6',
+          borderWidth: 2,
+          pointRadius: 3,
+          tension: 0.4,
+          fill: false,
+          order: 1
         }
       ]
     };

@@ -237,7 +237,7 @@ export class TransactionService {
     });
   });
 
-  // Biểu đồ: Xu hướng 6 tháng
+  // Biểu đồ: Xu hướng 6 tháng (Thu, Chi, Tồn)
   readonly monthlyTrend = computed(() => {
     const last6Months = Array.from({length: 6}, (_, i) => {
       const d = new Date();
@@ -248,13 +248,30 @@ export class TransactionService {
       };
     }).reverse();
 
+    let cumulativeBalance = 0;
+    // Tính số dư gốc trước khi bắt đầu 6 tháng (để làm mốc cumulative)
+    const oldestMonth = last6Months[0];
+    const prefixOldest = `${oldestMonth.year}-${oldestMonth.month.toString().padStart(2, '0')}`;
+    
+    cumulativeBalance = this.transactionsSignal()
+      .filter(t => t.date < prefixOldest)
+      .reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
+
     return last6Months.map(m => {
       const monthPrefix = `${m.year}-${m.month.toString().padStart(2, '0')}`;
       const monthTrans = this.transactionsSignal().filter(t => t.date.startsWith(monthPrefix));
+      
+      const income = monthTrans.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+      const expense = monthTrans.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+      const balance = income - expense;
+      cumulativeBalance += balance;
+
       return {
-        label: `Tháng ${m.month}`,
-        income: monthTrans.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0),
-        expense: monthTrans.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
+        label: `T${m.month}/${m.year.toString().slice(-2)}`,
+        income,
+        expense,
+        balance,
+        cumulative: cumulativeBalance
       };
     });
   });
