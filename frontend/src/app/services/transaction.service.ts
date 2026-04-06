@@ -19,7 +19,7 @@ export interface Transaction {
 export class TransactionService {
   private http = inject(HttpClient);
   private categoryService = inject(CategoryService);
-  private apiUrl = 'http://localhost:3000/api/transactions';
+  private apiUrl = 'http://192.168.1.15:3000/api/transactions';
 
   private transactionsSignal = signal<Transaction[]>([]);
   readonly transactions = this.transactionsSignal.asReadonly();

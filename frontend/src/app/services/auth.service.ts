@@ -20,7 +20,7 @@ export interface AuthResponse {
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
-  private apiUrl = 'http://localhost:3000/api/auth';
+  private apiUrl = 'http://192.168.1.15:3000/api/auth';
 
   private userSignal = signal<User | null>(null);
   

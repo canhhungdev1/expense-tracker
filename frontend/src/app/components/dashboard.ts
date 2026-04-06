@@ -81,10 +81,10 @@ import { TransactionService } from '../services/transaction.service';
             class="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-50 dark:border-slate-800 flex items-center justify-between transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 active:scale-95 duration-200">
             <div class="flex items-center gap-4">
               <div class="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-xl shadow-inner border border-slate-100 dark:border-slate-700">
-                {{ getIcon(t.category) }}
+                {{ t.category?.icon || '✨' }}
               </div>
               <div>
-                <p class="text-sm font-bold text-slate-800 dark:text-slate-100">{{ t.note || getCategoryName(t.category) }}</p>
+                <p class="text-sm font-bold text-slate-800 dark:text-slate-100">{{ t.note || t.category?.name || 'Khác' }}</p>
                 <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">{{ t.date | date:'dd/MM/yyyy' }}</p>
               </div>
             </div>
@@ -103,51 +103,31 @@ import { TransactionService } from '../services/transaction.service';
 export class DashboardComponent {
   transactionService = inject(TransactionService);
 
-  // Mock icons and names for display
-  private categoryData: Record<string, {name: string, icon: string}> = {
-    '1': { name: 'Ăn uống', icon: '🍲' },
-    '2': { name: 'Di chuyển', icon: '🚗' },
-    '3': { name: 'Mua sắm', icon: '🛍️' },
-    '4': { name: 'Điện nước', icon: '⚡' },
-    '5': { name: 'Giải trí', icon: '🎬' },
-    '6': { name: 'Y tế', icon: '🏥' },
-    '7': { name: 'Giáo dục', icon: '🎓' },
-    '8': { name: 'Khác', icon: '✨' },
-    '101': { name: 'Tiền lương', icon: '💰' },
-    '102': { name: 'Lương thưởng', icon: '🧧' },
-    '103': { name: 'Quà tặng', icon: '🎁' },
-    '104': { name: 'Kinh doanh', icon: '📈' },
-    '105': { name: 'Tiền lãi', icon: '🏦' },
-    '106': { name: 'Khác', icon: '➕' },
-  };
-
   get topCategories() {
     const expenses = this.transactionService.transactions().filter(t => t.type === 'expense');
     const total = this.transactionService.totalExpense() || 1;
     
-    // Group by category
-    const groups = expenses.reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount;
-      return acc;
-    }, {} as Record<string, number>);
+    // Group by category name/icon (since we have the full category object)
+    const groups: Record<string, {name: string, icon: string, amount: number}> = {};
+    
+    expenses.forEach(t => {
+      const catName = t.category?.name || 'Khác';
+      if (!groups[catName]) {
+        groups[catName] = {
+          name: catName,
+          icon: t.category?.icon || '✨',
+          amount: 0
+        };
+      }
+      groups[catName].amount += Number(t.amount);
+    });
 
-    return Object.entries(groups)
-      .map(([id, amount]) => ({
-        id,
-        amount,
-        name: this.categoryData[id]?.name || 'Khác',
-        icon: this.categoryData[id]?.icon || '✨',
-        percentage: (amount / total) * 100
+    return Object.values(groups)
+      .map(group => ({
+        ...group,
+        percentage: (group.amount / total) * 100
       }))
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 3);
-  }
-
-  getIcon(catId: string) {
-    return this.categoryData[catId]?.icon || '✨';
-  }
-
-  getCategoryName(catId: string) {
-    return this.categoryData[catId]?.name || 'Khác';
   }
 }

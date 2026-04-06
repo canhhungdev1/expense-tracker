@@ -18,6 +18,7 @@ import { Category } from './categories/category.entity';
       database: 'expense_tracker',
       entities: [Transaction, User, Category],
       synchronize: true,
+      charset: 'utf8mb4',
     }),
     TransactionsModule,
     AuthModule,

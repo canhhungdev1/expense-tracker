@@ -11,14 +11,12 @@ import { AuthService } from '../../services/auth.service';
   template: `
     <div class="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 pb-12 transition-colors duration-500">
       <!-- Logo / Welcome -->
-      <div class="mb-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div class="w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-[32px] shadow-xl shadow-emerald-200 dark:shadow-none mx-auto mb-6 flex items-center justify-center text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
+      <div class="mb-10 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div class="w-40 h-40 mx-auto mb-4 drop-shadow-2xl">
+          <img src="login-illustration.png" alt="Smart Finance" class="w-full h-full object-contain transform hover:scale-105 transition-transform duration-500">
         </div>
         <h1 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Chào mừng bạn</h1>
-        <p class="text-slate-400 font-bold text-xs uppercase tracking-[0.2em] mt-2">Quản lý tài chính thông minh</p>
+        <p class="text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em] mt-3">Quản lý tài chính thông minh</p>
       </div>
 
       <!-- Login Form Card -->
