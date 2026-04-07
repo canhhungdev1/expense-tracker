@@ -2,6 +2,7 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { Category, CategoryService } from './category.service';
+import { environment } from '../../environments/environment';
 
 export interface Transaction {
   id: string;
@@ -19,7 +20,7 @@ export interface Transaction {
 export class TransactionService {
   private http = inject(HttpClient);
   private categoryService = inject(CategoryService);
-  private apiUrl = 'http://localhost:3000/api/transactions';
+  private apiUrl = `${environment.apiUrl}/transactions`;
 
   private transactionsSignal = signal<Transaction[]>([]);
   readonly transactions = this.transactionsSignal.asReadonly();
