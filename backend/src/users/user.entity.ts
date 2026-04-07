@@ -1,11 +1,19 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryColumn, Column, OneToMany, BeforeInsert } from 'typeorm';
 import { Transaction } from '../transactions/transaction.entity';
 import { Category } from '../categories/category.entity';
+import { v4 as uuidv4 } from 'uuid';
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryColumn()
+  id: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = uuidv4();
+    }
+  }
 
   @Column({ unique: true })
   email: string;

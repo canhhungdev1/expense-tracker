@@ -1,16 +1,17 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TransactionService } from '../services/transaction.service';
 import { CategoryService } from '../services/category.service';
+import { CategoryPickerComponent } from './category-picker';
 
 type TransactionType = 'income' | 'expense';
 
 @Component({
   selector: 'app-transaction-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, CategoryPickerComponent],
   template: `
     <div class="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 flex flex-col items-center pb-24 transition-colors duration-500">
       <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-[40px] shadow-2xl shadow-slate-200/50 dark:shadow-none p-8 border border-white dark:border-slate-800">
@@ -90,18 +91,38 @@ type TransactionType = 'income' | 'expense';
             <div class="flex overflow-x-auto pb-4 gap-4 no-scrollbar -mx-6 px-6 snap-x snap-mandatory">
               <button 
                 type="button"
-                *ngFor="let cat of activeCategories"
+                *ngFor="let cat of quickCategories()"
                 (click)="transactionForm.patchValue({category: cat.id})"
                 class="flex-shrink-0 flex flex-col items-center justify-center w-[92px] h-[92px] rounded-[32px] transition-all duration-300 border snap-center"
                 [ngClass]="transactionForm.get('category')?.value === cat.id ? 
                   (type === 'expense' ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900 ring-4 ring-rose-500/10 shadow-lg shadow-rose-100/50' : 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900 ring-4 ring-emerald-500/10 shadow-lg shadow-emerald-100/50') : 
-                  'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50'"
+                  'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'"
               >
-                <div class="text-3xl mb-1 transform transition-transform duration-300" [class.scale-125]="transactionForm.get('category')?.value === cat.id">{{cat.icon}}</div>
+                <div class="text-3xl mb-1 transition-transform" [class.scale-125]="transactionForm.get('category')?.value === cat.id">{{cat.icon}}</div>
                 <span class="text-[11px] font-bold" [ngClass]="transactionForm.get('category')?.value === cat.id ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'">{{cat.name}}</span>
+              </button>
+
+              <!-- "Khác" button -->
+              <button 
+                type="button"
+                (click)="showPicker.set(true)"
+                class="flex-shrink-0 flex flex-col items-center justify-center w-[92px] h-[92px] rounded-[32px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 snap-center active:scale-95 transition-all"
+              >
+                <div class="text-2xl mb-1 text-slate-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>
+                </div>
+                <span class="text-[11px] font-bold text-slate-400">Khác</span>
               </button>
             </div>
           </div>
+
+          <!-- Category Picker Modal -->
+          <app-category-picker 
+            *ngIf="showPicker()" 
+            [type]="type" 
+            (close)="showPicker.set(false)"
+            (select)="onCategorySelect($event)"
+          ></app-category-picker>
 
           <!-- Date and Note Group -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[32px] border border-slate-100 dark:border-slate-800">
@@ -165,12 +186,19 @@ export class TransactionFormComponent {
   transactionForm: FormGroup;
   type: TransactionType = 'expense';
   isSubmitting = signal(false);
+  showPicker = signal(false);
 
   quickAmounts = [20000, 50000, 100000, 200000, 500000];
 
-  get activeCategories() {
+  activeCategories = computed(() => {
     return this.categoryService.categories().filter(c => c.type === this.type);
-  }
+  });
+
+  quickCategories = computed(() => {
+    const cats = this.activeCategories();
+    // Show only the first 5 categories as quick chips
+    return cats.slice(0, 5);
+  });
 
   constructor() {
     this.transactionForm = this.fb.group({
@@ -182,7 +210,7 @@ export class TransactionFormComponent {
 
     // Auto-select first category when loaded
     effect(() => {
-      const cats = this.activeCategories;
+      const cats = this.activeCategories();
       if (cats.length > 0 && !this.transactionForm.get('category')?.value) {
         this.transactionForm.patchValue({ category: cats[0].id });
       }
@@ -191,10 +219,15 @@ export class TransactionFormComponent {
 
   setType(type: TransactionType) {
     this.type = type;
-    const firstCat = this.activeCategories[0]?.id;
+    const firstCat = this.activeCategories()[0]?.id;
     if (firstCat) {
       this.transactionForm.patchValue({ category: firstCat });
     }
+  }
+
+  onCategorySelect(category: any) {
+    this.transactionForm.patchValue({ category: category.id });
+    this.showPicker.set(false);
   }
 
   onAmountInput(event: any) {

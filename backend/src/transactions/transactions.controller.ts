@@ -21,12 +21,11 @@ export class TransactionsController {
       search?: string;
     }
   ): Promise<{ data: Transaction[]; total: number; hasMore: boolean }> {
-    // Chuyển đổi các tham số cần thiết sang số lẻ (numeric)
+    // Chuyển đổi các tham số cần thiết sang số lẻ (numeric), riêng categoryId giữ dạng string cho UUID
     const processedQuery = {
       ...query,
       page: query.page ? Number(query.page) : undefined,
       limit: query.limit ? Number(query.limit) : undefined,
-      categoryId: query.categoryId ? Number(query.categoryId) : undefined,
     };
     return this.transactionsService.findAll(req.user.userId, processedQuery);
   }
@@ -38,11 +37,11 @@ export class TransactionsController {
 
   @Patch(':id')
   update(@Request() req, @Param('id') id: string, @Body() updateData: Partial<Transaction>): Promise<Transaction> {
-    return this.transactionsService.update(+id, updateData, req.user.userId);
+    return this.transactionsService.update(id, updateData, req.user.userId);
   }
 
   @Delete(':id')
   remove(@Request() req, @Param('id') id: string): Promise<void> {
-    return this.transactionsService.remove(+id, req.user.userId);
+    return this.transactionsService.remove(id, req.user.userId);
   }
 }

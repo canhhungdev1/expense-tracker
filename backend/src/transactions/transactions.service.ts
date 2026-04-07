@@ -11,12 +11,12 @@ export class TransactionsService {
   ) {}
 
   async findAll(
-    userId: number,
+    userId: string,
     query: {
       page?: number;
       limit?: number;
       type?: 'income' | 'expense';
-      categoryId?: number;
+      categoryId?: string;
       startDate?: string;
       endDate?: string;
       search?: string;
@@ -29,13 +29,13 @@ export class TransactionsService {
       .leftJoinAndSelect('transaction.category', 'category')
       .where('transaction.userId = :userId', { userId })
       .orderBy('transaction.date', 'DESC')
-      .addOrderBy('transaction.id', 'DESC');
+      .addOrderBy('transaction.date', 'DESC'); // Sort by date primarily
 
     if (type && (type as any) !== 'all') {
       queryBuilder.andWhere('transaction.type = :type', { type });
     }
 
-    if (categoryId && !isNaN(categoryId)) {
+    if (categoryId && categoryId.trim() !== '') {
       queryBuilder.andWhere('transaction.categoryId = :categoryId', { categoryId });
     }
 
@@ -63,7 +63,7 @@ export class TransactionsService {
     };
   }
 
-  async create(transactionData: Partial<Transaction>, userId: number): Promise<Transaction> {
+  async create(transactionData: Partial<Transaction>, userId: string): Promise<Transaction> {
     const transaction = this.transactionsRepository.create({
       ...transactionData,
       userId,
@@ -71,7 +71,7 @@ export class TransactionsService {
     return this.transactionsRepository.save(transaction);
   }
 
-  async update(id: number, updateData: Partial<Transaction>, userId: number): Promise<Transaction> {
+  async update(id: string, updateData: Partial<Transaction>, userId: string): Promise<Transaction> {
     const transaction = await this.transactionsRepository.findOne({
       where: { id, userId },
     });
@@ -83,7 +83,7 @@ export class TransactionsService {
     return this.transactionsRepository.save(transaction);
   }
 
-  async remove(id: number, userId: number): Promise<void> {
+  async remove(id: string, userId: string): Promise<void> {
     const transaction = await this.transactionsRepository.findOne({
       where: { id, userId },
     });

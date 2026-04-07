@@ -85,8 +85,8 @@ import { CategoryService } from '../services/category.service';
           >Tất cả</button>
           <button 
             *ngFor="let cat of categoryService.categories()"
-            (click)="selectedCategory.set(cat.id.toString())"
-            [class]="selectedCategory() === cat.id.toString() ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 scale-105' : 'bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 border border-slate-100 dark:border-slate-800'"
+            (click)="selectedCategory.set(cat.id)"
+            [class]="selectedCategory() === cat.id ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 scale-105' : 'bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 border border-slate-100 dark:border-slate-800'"
             class="px-6 py-2.5 rounded-[20px] text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all duration-300 flex items-center gap-2"
           >
             <span>{{ cat.icon }}</span>
@@ -262,7 +262,7 @@ export class TransactionHistoryComponent {
       const filters = {
         search: this.searchQuery(),
         type: this.filterType() !== 'all' ? this.filterType() : undefined,
-        categoryId: this.selectedCategory() !== 'all' ? Number(this.selectedCategory()) : undefined,
+        categoryId: this.selectedCategory() !== 'all' ? this.selectedCategory() : undefined,
         startDate: this.startDate(),
         endDate: this.endDate()
       };
@@ -285,7 +285,7 @@ export class TransactionHistoryComponent {
     const filters = {
       search: this.searchQuery(),
       type: this.filterType() !== 'all' ? this.filterType() : undefined,
-      categoryId: this.selectedCategory() !== 'all' ? Number(this.selectedCategory()) : undefined,
+      categoryId: this.selectedCategory() !== 'all' ? this.selectedCategory() : undefined,
       startDate: this.startDate(),
       endDate: this.endDate()
     };
@@ -295,10 +295,10 @@ export class TransactionHistoryComponent {
     this.isLoading.set(false);
   }
 
-  async onDelete(id: number) {
+  async onDelete(id: string) {
     if (confirm('Bạn có chắc chắn muốn xóa giao dịch này không?')) {
       try {
-        await this.transactionService.deleteTransaction(id);
+        await this.transactionService.deleteTransaction(id as string);
         // Tải lại lịch sử sau khi xóa
         this.onLoadMore(); // Hoặc reset về trang 1
       } catch (error) {

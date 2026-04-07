@@ -4,11 +4,11 @@ import { firstValueFrom } from 'rxjs';
 import { Category, CategoryService } from './category.service';
 
 export interface Transaction {
-  id: number;
+  id: string;
   type: 'income' | 'expense';
   amount: number;
   category?: Category;
-  categoryId: number;
+  categoryId: string;
   date: string;
   note: string;
 }
@@ -174,7 +174,7 @@ export class TransactionService {
   // Biểu đồ: Phân bổ chi tiêu (theo kỳ lọc)
   readonly expensesByCategory = computed(() => {
     const expenses = this.filteredTransactions().filter(t => t.type === 'expense');
-    const categories: Record<number, number> = {};
+    const categories: Record<string, number> = {};
     
     expenses.forEach(t => {
       categories[t.categoryId] = (categories[t.categoryId] || 0) + Number(t.amount);
@@ -182,10 +182,9 @@ export class TransactionService {
 
     return Object.entries(categories)
       .map(([id, amount]) => {
-        const catId = Number(id);
-        const cat = this.categoryService.categories().find(c => c.id === catId);
+        const cat = this.categoryService.categories().find(c => c.id === id);
         return {
-          id: catId,
+          id,
           name: cat?.name || 'Khác',
           icon: cat?.icon || '✨',
           color: cat?.color || '#94A3B8',
@@ -198,7 +197,7 @@ export class TransactionService {
   // Biểu đồ: Phân bổ thu nhập (theo kỳ lọc)
   readonly incomeByCategory = computed(() => {
     const income = this.filteredTransactions().filter(t => t.type === 'income');
-    const categories: Record<number, number> = {};
+    const categories: Record<string, number> = {};
     
     income.forEach(t => {
       categories[t.categoryId] = (categories[t.categoryId] || 0) + Number(t.amount);
@@ -206,10 +205,9 @@ export class TransactionService {
 
     return Object.entries(categories)
       .map(([id, amount]) => {
-        const catId = Number(id);
-        const cat = this.categoryService.categories().find(c => c.id === catId);
+        const cat = this.categoryService.categories().find(c => c.id === id);
         return {
-          id: catId,
+          id,
           name: cat?.name || 'Khác',
           icon: cat?.icon || '✨',
           color: cat?.color || '#10b981',
@@ -288,7 +286,7 @@ export class TransactionService {
     }
   }
 
-  async updateTransaction(id: number, transaction: Partial<Transaction>): Promise<Transaction> {
+  async updateTransaction(id: string, transaction: Partial<Transaction>): Promise<Transaction> {
     try {
       const updated = await firstValueFrom(this.http.patch<Transaction>(`${this.apiUrl}/${id}`, transaction));
       const formatted = { ...updated, amount: Number(updated.amount) };
@@ -300,7 +298,7 @@ export class TransactionService {
     }
   }
 
-  async deleteTransaction(id: number): Promise<void> {
+  async deleteTransaction(id: string): Promise<void> {
     try {
       await firstValueFrom(this.http.delete(`${this.apiUrl}/${id}`));
       this.transactionsSignal.update(ts => ts.filter(t => t.id !== id));
