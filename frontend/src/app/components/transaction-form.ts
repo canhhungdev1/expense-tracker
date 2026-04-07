@@ -125,17 +125,7 @@ type TransactionType = 'income' | 'expense';
           ></app-category-picker>
 
           <!-- Date and Note Group -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[32px] border border-slate-100 dark:border-slate-800">
-            <div class="space-y-2">
-              <label class="block text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Ngày tháng</label>
-              <div class="relative">
-                <input 
-                  type="date" 
-                  formControlName="date"
-                  class="w-full pl-4 py-3.5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-slate-100 dark:focus:ring-emerald-950/30 focus:border-slate-200 dark:focus:border-slate-700 outline-none font-bold text-slate-700 dark:text-slate-200 transition-all text-sm"
-                >
-              </div>
-            </div>
+          <div class="space-y-6 bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[32px] border border-slate-100 dark:border-slate-800">
             <div class="space-y-2">
               <label class="block text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Ghi chú</label>
               <input 
@@ -144,6 +134,16 @@ type TransactionType = 'income' | 'expense';
                 placeholder="Ví dụ: Ăn tối..."
                 class="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-slate-100 dark:focus:ring-emerald-950/30 focus:border-slate-200 dark:focus:border-slate-700 outline-none font-bold text-slate-700 dark:text-slate-200 transition-all text-sm"
               >
+            </div>
+            <div class="space-y-2">
+              <label class="block text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Ngày giao dịch</label>
+              <div class="relative">
+                <input 
+                  type="date" 
+                  formControlName="date"
+                  class="w-full pl-4 py-3.5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-slate-100 dark:focus:ring-emerald-950/30 focus:border-slate-200 dark:focus:border-slate-700 outline-none font-bold text-slate-700 dark:text-slate-200 transition-all text-sm"
+                >
+              </div>
             </div>
           </div>
 

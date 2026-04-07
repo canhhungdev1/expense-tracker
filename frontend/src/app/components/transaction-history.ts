@@ -229,10 +229,13 @@ import { CategoryService } from '../services/category.service';
                 </div>
               </div>
 
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Ghi chú & Ngày</label>
-                <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-4">
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Ghi chú</label>
                   <input type="text" [(ngModel)]="editingTransaction()!.note" name="note" placeholder="Nhập ghi chú..." class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-[20px] text-[11px] font-bold text-slate-700 dark:text-slate-200 outline-none">
+                </div>
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Ngày thực hiện</label>
                   <input type="date" [(ngModel)]="editingTransaction()!.date" name="date" class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-[20px] text-[11px] font-bold text-slate-700 dark:text-slate-200 outline-none">
                 </div>
               </div>
