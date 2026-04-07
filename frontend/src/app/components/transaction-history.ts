@@ -223,9 +223,9 @@ import { CategoryService } from '../services/category.service';
               </div>
             </div>
 
-            <div class="pt-4 flex gap-4">
-              <button (click)="isEditModalOpen.set(false)" type="button" class="flex-1 py-5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-[24px] text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">Hủy</button>
-              <button (click)="onSaveEdit()" type="button" class="flex-[2] py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[24px] text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Lưu thay đổi</button>
+            <div class="sticky bottom-0 bg-white dark:bg-slate-900 pt-4 pb-2 z-10 border-t border-slate-50 dark:border-slate-800/50 mt-4 flex gap-4">
+              <button (click)="isEditModalOpen.set(false)" type="button" class="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-[20px] text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">Hủy</button>
+              <button (click)="onSaveEdit()" type="button" class="flex-[2] py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[20px] text-[9px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Lưu thay đổi</button>
             </div>
           </form>
         </div>
