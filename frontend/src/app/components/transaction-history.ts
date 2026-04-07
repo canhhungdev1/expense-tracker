@@ -325,7 +325,6 @@ export class TransactionHistoryComponent {
     if (confirm('Bạn có chắc chắn muốn xóa giao dịch này không?')) {
       try {
         await this.transactionService.deleteTransaction(id as string);
-        this.onLoadMore();
       } catch (error) {
         alert('Lỗi khi xóa giao dịch. Vui lòng thử lại!');
       }

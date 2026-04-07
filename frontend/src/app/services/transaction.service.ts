@@ -296,8 +296,11 @@ export class TransactionService {
   async addTransaction(transaction: Omit<Transaction, 'id'>): Promise<Transaction> {
     try {
       const newT = await firstValueFrom(this.http.post<Transaction>(this.apiUrl, transaction));
-      const formatted = { ...newT, amount: Number(newT.amount) };
+      const category = this.categoryService.categories().find(c => c.id === newT.categoryId);
+      const formatted = { ...newT, amount: Number(newT.amount), category };
+      
       this.transactionsSignal.update(ts => [formatted, ...ts]);
+      this.historyTransactionsSignal.update(ts => [formatted, ...ts]);
       return formatted;
     } catch (error) {
       console.error('Lỗi khi lưu giao dịch:', error);
@@ -308,8 +311,11 @@ export class TransactionService {
   async updateTransaction(id: string, transaction: Partial<Transaction>): Promise<Transaction> {
     try {
       const updated = await firstValueFrom(this.http.patch<Transaction>(`${this.apiUrl}/${id}`, transaction));
-      const formatted = { ...updated, amount: Number(updated.amount) };
+      const category = this.categoryService.categories().find(c => c.id === updated.categoryId);
+      const formatted = { ...updated, amount: Number(updated.amount), category };
+      
       this.transactionsSignal.update(ts => ts.map(t => t.id === id ? formatted : t));
+      this.historyTransactionsSignal.update(ts => ts.map(t => t.id === id ? formatted : t));
       return formatted;
     } catch (error) {
       console.error('Lỗi khi cập nhật giao dịch:', error);
@@ -321,6 +327,7 @@ export class TransactionService {
     try {
       await firstValueFrom(this.http.delete(`${this.apiUrl}/${id}`));
       this.transactionsSignal.update(ts => ts.filter(t => t.id !== id));
+      this.historyTransactionsSignal.update(ts => ts.filter(t => t.id !== id));
     } catch (error) {
       console.error('Lỗi khi xóa giao dịch:', error);
       throw error;

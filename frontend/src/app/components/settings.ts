@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TransactionService } from '../services/transaction.service';
@@ -22,12 +22,15 @@ import { ThemeService } from '../services/theme.service';
       </div>
 
       <!-- Profile Card -->
-      <div class="bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-8 text-center">
+      <div *ngIf="authService.currentUser() as user" class="bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-8 text-center">
         <div class="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full mx-auto mb-4 border-4 border-white dark:border-slate-800 shadow-lg flex items-center justify-center text-white text-3xl font-black italic">
-          AT
+          {{ getInitials(user.name) }}
         </div>
-        <h3 class="text-xl font-black text-slate-800 dark:text-white">Người dùng Antigravity</h3>
-        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Thành viên Premium</p>
+        <h3 class="text-xl font-black text-slate-800 dark:text-white">{{ user.name }}</h3>
+        <p class="text-xs font-bold text-slate-400 lowercase tracking-widest mt-1">{{ user.email }}</p>
+        <div class="inline-block mt-4 px-4 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-full">
+           <span class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Thành viên Premium</span>
+        </div>
       </div>
 
       <!-- Settings List -->
@@ -107,5 +110,14 @@ export class SettingsComponent {
       // Logic xóa dữ liệu (cần bổ sung vào TransactionService)
       alert('Chức năng xóa toàn bộ dữ liệu đang được đồng bộ với Backend...');
     }
+  }
+
+  getInitials(name: string): string {
+    if (!name) return 'U';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   }
 }
