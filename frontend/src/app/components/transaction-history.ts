@@ -160,21 +160,28 @@ import { CategoryService } from '../services/category.service';
             🔎
           </div>
           <h3 class="text-lg font-black text-slate-900 dark:text-white tracking-tight">Không tìm thấy giao dịch</h3>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
-        </div>
-      </div>
-
-      <!-- Edit Modal -->
-      <div *ngIf="isEditModalOpen()" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
-        <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" (click)="isEditModalOpen.set(false)"></div>
-        <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-t-[40px] sm:rounded-[40px] p-8 shadow-2xl animate-in slide-in-from-bottom-full duration-500 max-h-[90vh] overflow-y-auto no-scrollbar">
-          <div class="flex items-center justify-between mb-8 sticky top-0 bg-white dark:bg-slate-900 z-10 pb-4 border-b border-slate-50 dark:border-slate-800/50">
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Th�      <!-- Edit Modal (Responsive: Full Screen on Mobile, Centered on Tablet/Desktop) -->
+      <div *ngIf="isEditModalOpen()" class="fixed inset-0 z-[100] flex flex-col sm:items-center sm:justify-center p-0 sm:p-4 animate-in fade-in duration-300">
+        <!-- Backdrop (Visible only on desktop) -->
+        <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm hidden sm:block" (click)="isEditModalOpen.set(false)"></div>
+        
+        <!-- Modal Content Container -->
+        <div class="relative w-full h-full sm:h-auto sm:max-w-lg bg-white dark:bg-slate-900 sm:rounded-[40px] shadow-2xl flex flex-col animate-in slide-in-from-bottom-full duration-500 overflow-hidden">
+          
+          <!-- Sticky Header -->
+          <div class="flex items-center justify-between p-6 sm:p-8 bg-white dark:bg-slate-900 z-20 border-b border-slate-50 dark:border-slate-800/50 sticky top-0">
             <h2 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">Sửa giao dịch</h2>
             <button (click)="isEditModalOpen.set(false)" class="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
               </svg>
             </button>
+          </div>
+          
+          <!-- Scrollable Body Content -->
+          <div class="flex-1 overflow-y-auto p-6 sm:p-8 no-scrollbar scroll-smooth">
+            <form *ngIf="editingTransaction()" class="space-y-8">
+ </button>
           </div>
 
           <form *ngIf="editingTransaction()" class="space-y-6">
