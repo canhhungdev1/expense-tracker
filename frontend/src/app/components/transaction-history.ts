@@ -165,10 +165,10 @@ import { CategoryService } from '../services/category.service';
       </div>
 
       <!-- Edit Modal -->
-      <div *ngIf="isEditModalOpen()" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
+      <div *ngIf="isEditModalOpen()" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
         <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" (click)="isEditModalOpen.set(false)"></div>
-        <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-t-[40px] sm:rounded-[40px] p-8 shadow-2xl animate-in slide-in-from-bottom-full duration-500">
-          <div class="flex items-center justify-between mb-8">
+        <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-t-[40px] sm:rounded-[40px] p-8 shadow-2xl animate-in slide-in-from-bottom-full duration-500 max-h-[90vh] overflow-y-auto no-scrollbar">
+          <div class="flex items-center justify-between mb-8 sticky top-0 bg-white dark:bg-slate-900 z-10 pb-4 border-b border-slate-50 dark:border-slate-800/50">
             <h2 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">Sửa giao dịch</h2>
             <button (click)="isEditModalOpen.set(false)" class="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -272,6 +272,16 @@ export class TransactionHistoryComponent {
         this.isLoading.set(false);
       });
     }, { allowSignalWrites: true });
+
+    // Khóa scroll của body khi mở Modal
+    effect(() => {
+      const isOpen = this.isEditModalOpen();
+      if (isOpen) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = 'auto';
+      }
+    });
   }
 
   filteredCategories = computed(() => {
