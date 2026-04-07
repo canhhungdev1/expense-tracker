@@ -1,7 +1,8 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { Category, CategoryService } from './category.service';
+import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
 
 export interface Transaction {
@@ -20,6 +21,7 @@ export interface Transaction {
 export class TransactionService {
   private http = inject(HttpClient);
   private categoryService = inject(CategoryService);
+  private authService = inject(AuthService);
   private apiUrl = `${environment.apiUrl}/transactions`;
 
   private transactionsSignal = signal<Transaction[]>([]);
@@ -38,8 +40,13 @@ export class TransactionService {
   selectedYear = signal<number>(new Date().getFullYear());
 
   constructor() {
-    this.loadTransactions();
-    this.categoryService.loadCategories();
+    effect(() => {
+      if (this.authService.isLoggedIn()) {
+        this.loadTransactions();
+      } else {
+        this.clearData();
+      }
+    });
   }
 
   async loadTransactions() {
@@ -51,6 +58,17 @@ export class TransactionService {
     } catch (error) {
       console.error('Lỗi khi tải giao dịch:', error);
     }
+  }
+
+  clearData() {
+    this.transactionsSignal.set([]);
+    this.historyTransactionsSignal.set([]);
+    this.historyTotal.set(0);
+    this.hasMoreHistory.set(false);
+    this.historyPage.set(1);
+    // Reset filters
+    this.selectedMonth.set(new Date().getMonth() + 1);
+    this.selectedYear.set(new Date().getFullYear());
   }
 
   async loadHistory(filters: any = {}, append: boolean = false) {

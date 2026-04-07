@@ -1,6 +1,7 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
 
 export interface Category {
@@ -18,9 +19,20 @@ export interface Category {
 })
 export class CategoryService {
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
   private apiUrl = `${environment.apiUrl}/categories`;
 
   categories = signal<Category[]>([]);
+
+  constructor() {
+    effect(() => {
+      if (this.authService.isLoggedIn()) {
+        this.loadCategories();
+      } else {
+        this.clearData();
+      }
+    });
+  }
 
   async loadCategories() {
     try {
@@ -29,6 +41,10 @@ export class CategoryService {
     } catch (error) {
       console.error('Failed to load categories', error);
     }
+  }
+
+  clearData() {
+    this.categories.set([]);
   }
 
   async create(category: Partial<Category>) {
