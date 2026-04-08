@@ -112,7 +112,8 @@ import { PullToRefreshComponent } from './pull-to-refresh';
           </div>
         </div>
       </div>
-    </app-pull-to-refresh>
+    </div>
+  </app-pull-to-refresh>
   `,
   styles: [`
     :host { display: block; }
