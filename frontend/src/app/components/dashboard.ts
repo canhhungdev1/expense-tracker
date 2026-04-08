@@ -1,14 +1,16 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TransactionService } from '../services/transaction.service';
+import { PullToRefreshComponent } from './pull-to-refresh';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, PullToRefreshComponent],
   template: `
-    <div class="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 pb-24 transition-colors duration-500">
+    <app-pull-to-refresh [loading]="isLoading()" (refresh)="onRefresh()">
+      <div class="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 pb-24 transition-colors duration-500">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6 px-2 pt-2">
         <div>
@@ -110,7 +112,7 @@ import { TransactionService } from '../services/transaction.service';
           </div>
         </div>
       </div>
-    </div>
+    </app-pull-to-refresh>
   `,
   styles: [`
     :host { display: block; }
@@ -120,6 +122,13 @@ export class DashboardComponent {
   transactionService = inject(TransactionService);
   Math = Math;
   currentMonth = new Date().getMonth() + 1;
+  isLoading = signal(false);
+
+  async onRefresh() {
+    this.isLoading.set(true);
+    await this.transactionService.loadTransactions();
+    this.isLoading.set(false);
+  }
 
   get topCategories() {
     const now = new Date();

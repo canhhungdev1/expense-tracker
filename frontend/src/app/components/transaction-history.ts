@@ -3,13 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TransactionService, Transaction } from '../services/transaction.service';
 import { CategoryService } from '../services/category.service';
+import { PullToRefreshComponent } from './pull-to-refresh';
 
 @Component({
   selector: 'app-transaction-history',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PullToRefreshComponent],
   template: `
-    <div class="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 pb-24 transition-colors duration-500">
+    <app-pull-to-refresh [loading]="isLoading()" (refresh)="onRefresh()">
+      <div class="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 pb-24 transition-colors duration-500">
       <!-- Header with Search & Filter -->
       <div class="mb-8 space-y-4">
         <div class="flex items-center justify-between">
@@ -249,6 +251,7 @@ import { CategoryService } from '../services/category.service';
         </div>
       </div>
     </div>
+    </app-pull-to-refresh>
   `,
   styles: [`
     :host { display: block; }
@@ -288,7 +291,7 @@ export class TransactionHistoryComponent {
       this.transactionService.loadHistory(filters).then(() => {
         this.isLoading.set(false);
       });
-    }, { allowSignalWrites: true });
+    });
 
     effect(() => {
       const isOpen = this.isEditModalOpen();
@@ -318,6 +321,20 @@ export class TransactionHistoryComponent {
 
     this.isLoading.set(true);
     await this.transactionService.loadHistory(filters, true);
+    this.isLoading.set(false);
+  }
+
+  async onRefresh() {
+    const filters = {
+      search: this.searchQuery(),
+      type: this.filterType() !== 'all' ? this.filterType() : undefined,
+      categoryId: this.selectedCategory() !== 'all' ? this.selectedCategory() : undefined,
+      startDate: this.startDate(),
+      endDate: this.endDate()
+    };
+    
+    this.isLoading.set(true);
+    await this.transactionService.loadHistory(filters);
     this.isLoading.set(false);
   }
 
