@@ -55,11 +55,6 @@ export class PullToRefreshComponent implements AfterViewInit, OnDestroy {
   @Output() refresh = new EventEmitter<void>();
 
   private el = inject(ElementRef);
-  private startY = 0;
-  private startX = 0;
-  private currentY = 0;
-  private active = false;
-  private isSwipingHorizontally = false;
   private readonly REFRESH_THRESHOLD = 80;
   private readonly MAX_PULL = 150;
   private touchStartListener?: (e: TouchEvent) => void;
@@ -69,8 +64,15 @@ export class PullToRefreshComponent implements AfterViewInit, OnDestroy {
   pullDistance = signal(0);
   isRefreshing = signal(false);
 
+  private startY = 0;
+  private startX = 0;
+  private currentY = 0;
+  private active = false;
+  private isSwipingHorizontally = false;
+
   ngAfterViewInit() {
-    // Manual non-passive listeners for all touch events to avoid Intervention errors
+    // All touch events are manual and non-passive to fully control the scroll sequence
+    // and prevent conflicts with browser native pull-to-refresh
     this.touchStartListener = (e: TouchEvent) => this.onTouchStart(e);
     this.touchMoveListener = (e: TouchEvent) => this.onTouchMove(e);
     this.touchEndListener = (e: TouchEvent) => this.onTouchEnd();
@@ -88,15 +90,19 @@ export class PullToRefreshComponent implements AfterViewInit, OnDestroy {
     if (this.touchEndListener) el.removeEventListener('touchend', this.touchEndListener);
   }
 
+  private getScrollTop(event: TouchEvent): number {
+    const parent = (event.target as HTMLElement).closest('.overflow-y-auto');
+    if (parent) return parent.scrollTop;
+    return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+  }
+
   onTouchStart(event: TouchEvent) {
     const touch = event.touches[0];
     this.startY = touch.pageY;
     this.startX = touch.pageX;
     this.isSwipingHorizontally = false;
 
-    // Check if we are at the top of the scrollable container
-    const parent = (event.target as HTMLElement).closest('.overflow-y-auto');
-    const scrollTop = parent ? parent.scrollTop : window.scrollY;
+    const scrollTop = this.getScrollTop(event);
 
     if (scrollTop <= 0 && !this.isRefreshing()) {
       this.active = true;
@@ -122,9 +128,7 @@ export class PullToRefreshComponent implements AfterViewInit, OnDestroy {
     }
 
     if (diffY > 0) {
-      // PROACTIVELY call preventDefault if we are at the top and moving down
-      // This prevents the browser from starting a native scroll, 
-      // keeping the event sequence cancelable.
+      // Pulling DOWN - block native behavior to handle refresh
       if (event.cancelable) {
         event.preventDefault();
       }
@@ -132,8 +136,12 @@ export class PullToRefreshComponent implements AfterViewInit, OnDestroy {
       const resistance = 0.5;
       const cappedDiff = Math.min(diffY * resistance, this.MAX_PULL);
       this.pullDistance.set(cappedDiff);
+    } else if (diffY < -5) {
+      // Swiping UP - explicitly release control to allow natural scrolling DOWN
+      // This is crucial to prevent "stuck" scrolling when starting at top
+      this.active = false;
+      this.pullDistance.set(0);
     } else {
-      // If we move back up, reset pull distance but keep tracking
       this.pullDistance.set(0);
     }
   }

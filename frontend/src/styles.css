@@ -5,6 +5,7 @@
   body {
     @apply bg-slate-50 text-slate-900 transition-colors duration-500;
     touch-action: manipulation;
+    overscroll-behavior-y: none;
   }
   
   .dark body {
