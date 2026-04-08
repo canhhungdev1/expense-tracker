@@ -9,8 +9,8 @@ import { CommonModule } from '@angular/common';
     <div class="relative overflow-hidden min-h-full">
       <!-- Refresh Indicator -->
       <div 
-        class="absolute left-0 right-0 flex justify-center z-50 pointer-events-none transition-transform duration-200 ease-out"
-        [style.transform]="'translateY(' + pullDistance() + 'px)'"
+        class="absolute left-0 right-0 flex justify-center z-50 pointer-events-none transition-transform duration-200 ease-out will-change-transform"
+        [style.transform]="'translate3d(0, ' + pullDistance() + 'px, 0)'"
         [style.opacity]="pullDistance() > 0 ? 1 : 0"
       >
         <div 
@@ -35,8 +35,8 @@ import { CommonModule } from '@angular/common';
 
       <!-- Content Container -->
       <div 
-        class="transition-transform duration-200 ease-out"
-        [style.transform]="'translateY(' + (pullDistance() / 1.5) + 'px)'"
+        class="transition-transform duration-200 ease-out will-change-transform"
+        [style.transform]="'translate3d(0, ' + (pullDistance() / 1.5) + 'px, 0)'"
       >
         <ng-content></ng-content>
       </div>
@@ -47,6 +47,12 @@ import { CommonModule } from '@angular/common';
       display: block; 
       height: 100%; 
       overscroll-behavior-y: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+    .will-change-transform {
+      will-change: transform;
+      backface-visibility: hidden;
+      transform: translateZ(0);
     }
   `]
 })
